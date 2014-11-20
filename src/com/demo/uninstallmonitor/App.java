@@ -11,10 +11,9 @@ public class App extends Application {
 	static final String TAG="App";
 	@Override
 	public void onCreate() {
-		// TODO Auto-generated method stub
 		super.onCreate();
-		  startService(new Intent(this,UninstallMonitorService.class));
-	        Log.i("uninstall_monitor", "act start service");
+		  UninstallMonitorService.start(this);
+	        Log.i("uninstall_monitor", "application start service");
 		
 	SharedPreferences sPreferences=	PreferenceManager.getDefaultSharedPreferences(this);
 	sPreferences.edit().putBoolean("installed", true).apply();

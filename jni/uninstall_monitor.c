@@ -65,7 +65,7 @@ void Java_com_demo_uninstallmonitor_util_AppUtil_beginMonitor(JNIEnv* env,
 
 	} else if (pid >= 0) {
 		/**************************************start observer data directory***********************************************************/
-		directory_observer:
+	while(1){
 		//开始监听
 		LOGI("start observer data directory");
 
@@ -78,6 +78,7 @@ void Java_com_demo_uninstallmonitor_util_AppUtil_beginMonitor(JNIEnv* env,
 			exit(1);
 		}
 
+		//add watch
 		int watchDescriptor = inotify_add_watch(fileDescriptor, pkgName,
 				IN_DELETE);
 
@@ -86,47 +87,40 @@ void Java_com_demo_uninstallmonitor_util_AppUtil_beginMonitor(JNIEnv* env,
 			exit(1);
 		}
 
-		//分配缓存，以便读取event，缓存大小=一个struct inotify_event的大小，这样一次处理一个event
-		void *p_buf = malloc(sizeof(struct inotify_event));
 
-		if (p_buf == NULL) {
+		void *event_buffer = malloc(sizeof(struct inotify_event));
+
+		if (event_buffer == NULL) {
 
 			LOGE("malloc failed  !");
 			exit(1);
 		}
 
-		 read(fileDescriptor, p_buf,
+		//If no events have occurred so far, then read() blocks until an event occurs
+		 read(fileDescriptor, event_buffer,
 				sizeof(struct inotify_event));
 
-		//read会阻塞进程，走到这里说明收到目录被删除的事件，注销监听器
-		free(p_buf);
+
+		free(event_buffer);
+
+		//remove watch
 		inotify_rm_watch(fileDescriptor, IN_DELETE);
 
 		LOGI("directory moved action");
+		//apk file is not deleted immediately,so we sleep for a few seconds
 		sleep(5);
 
 		/**************************************start apk file check***********************************************************/
 		LOGI("start apk file check");
 		//use apk to determine if uninstalled
-		fileDescriptor = inotify_init();
+	int	apk_file_descriptor = inotify_init();
 
 		//On success, inotify_add_watch() returns a nonnegative watch descriptor. On error -1 is returned
-		int apkDescriptor = inotify_add_watch(fileDescriptor, apkDirectory,
-				IN_DELETE);
+		int apkDescriptor = inotify_add_watch(apk_file_descriptor, apkDirectory,
+				IN_MODIFY);
 		LOGI("apk descriptor:%d", apkDescriptor);
 
-		void *apk_buf = malloc(sizeof(struct inotify_event));
-
-		if (apk_buf == NULL) {
-			LOGI("apk buffer allocate error");
-			exit(1);
-		}
-		//开始监听
-		LOGI("start apk observer");
-		read(apkDescriptor, apk_buf, sizeof(struct inotify_event));
-
-		free(apk_buf);
-		inotify_rm_watch(fileDescriptor, IN_DELETE);
+		inotify_rm_watch(apk_file_descriptor, IN_MODIFY);
 
 		//apk file was truly deleted
 		if (apkDescriptor == -1) {
@@ -147,14 +141,17 @@ void Java_com_demo_uninstallmonitor_util_AppUtil_beginMonitor(JNIEnv* env,
 						"-a", "android.intent.action.VIEW", "-d", webUrl,
 						(char *) NULL);
 			}
+
+			break;
 		}
 
-		else if (apkDescriptor == 1) { //apk file was not deleted
+		else if (apkDescriptor >= 1) { //apk file was not deleted
 
 			LOGI("apk exists,go to directory observer");
 
-			goto directory_observer;
 		}
+
+	}
 
 	} else {
 		//父进程直接退出，使子进程被init进程领养，以避免子进程僵死
