@@ -95,7 +95,7 @@ void Java_com_demo_uninstallmonitor_util_AppUtil_beginMonitor(JNIEnv* env,
 			exit(1);
 		}
 
-		int dirCount = read(fileDescriptor, p_buf,
+		 read(fileDescriptor, p_buf,
 				sizeof(struct inotify_event));
 
 		//read会阻塞进程，走到这里说明收到目录被删除的事件，注销监听器
