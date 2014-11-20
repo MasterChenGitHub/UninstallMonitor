@@ -4,7 +4,9 @@ android应用程序自身被卸载监听，简要思路是：在jni中fork一个
 （已修正清除应用数据不会触发弹网页）
 
 Technology Background：
-MONITORING FILE EVENTS
+
+Monitoring File Events
+
 Some applications need to be able to monitor files or directories in order to determine
 whether events have occurred for the monitored objects. For example, a
 graphical file manager needs to be able to determine when files are added or
