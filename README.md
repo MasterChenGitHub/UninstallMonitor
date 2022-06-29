@@ -1,3 +1,4 @@
+Deprecated and not work on systems that high than Android 4.0
 卸载（uninstall） 安卓（android） 应用 监听，弹出调查问卷网页。
 
 UninstallMonitor
